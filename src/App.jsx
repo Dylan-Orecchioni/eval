@@ -7,7 +7,6 @@ import HomePage from './HomePage'
 import EditBook from './EditBook'
 
 function App() {
-  const [count, setCount] = useState(0)
 
   return (
     <>
