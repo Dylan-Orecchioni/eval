@@ -1,50 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Link } from 'react-router-dom';
-import EditBook from './EditBook';
+import { deleteBooksAPI, getBooksAPI } from './api/BookAPI';
 
 const HomePage = () => {
     const [books, setBooks] = useState([]);
-    const [editingBookId, setEditingBookId] = useState(null);
 
     useEffect(() => {
-        const request = indexedDB.open('books', 1);
-
-        request.onsuccess = function(event) {
-            let db = event.target.result;
-
-            const transaction = db.transaction(['books'], 'readonly');
-            const booksStore = transaction.objectStore('books');
-            const request2 = booksStore.getAll();
-
-            request2.onsuccess = function(event) {
-                setBooks(request2.result);
-            }
+        const fetchBooks = async () => {
+            let books = await getBooksAPI();
+            setBooks(books);
         }
+        fetchBooks();
     }, []);
 
-    const handleEditBook = (bookId) => {
-        setEditingBookId(bookId);
-    }
-
-    const handleDeleteBook = (bookId) => {
-        const request = indexedDB.open('books', 1);
-        request.onsuccess = function(event) {
-            let db = event.target.result;
-            const transaction = db.transaction(['books'], 'readwrite');
-            const booksStore = transaction.objectStore('books');
-            const deleteRequest = booksStore.delete(bookId);
-
-            deleteRequest.onsuccess = function(event) {
-                console.log('Book deleted from IndexedDB');
-            }
-
-            deleteRequest.onerror = function(event) {
-                console.error('Error deleting book from IndexedDB');
-            }
-        }
-
-        setBooks(books.filter(book => book.id !== bookId));
+    const handleDeleteBook = async (bookId) => {
+        await deleteBooksAPI(bookId)
+            .then(() => {
+                console.log('Book deleted from Firestore'); 
+                setBooks(prevBooks => prevBooks.filter(book => book.id !== bookId));
+            })
+            .catch(error => {
+                console.error('Error deleting book:', error);
+            });
     }
 
     return (
